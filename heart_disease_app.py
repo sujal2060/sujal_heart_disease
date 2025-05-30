@@ -20,6 +20,10 @@ st.set_page_config(
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 chatbot = HeartDiseaseChatbot(TOGETHER_API_KEY)
 
+# Initialize session state variables before any access
+if "show_chatbot" not in st.session_state:
+    st.session_state.show_chatbot = True
+
 # Title and description
 st.title("Heart Disease Prediction System")
 st.write("""
@@ -33,8 +37,6 @@ if st.session_state.show_chatbot:
 else:
     col1, col2, col3 = st.columns([1, 4, 1])
 
-if "show_chatbot" not in st.session_state:
-    st.session_state.show_chatbot = True
 if "chatgpt_input" not in st.session_state:
     st.session_state["chatgpt_input"] = ""
 if "clear_input" not in st.session_state:
