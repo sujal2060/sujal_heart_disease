@@ -32,7 +32,7 @@ Please fill in your details below to get a prediction.
 """)
 
 # Adjust column proportions to give more space to chatbot
-col1, col2 = st.columns([1, 2])  # Changed proportions to make col2 (chatbot) larger
+col1, col2 = st.columns([1, 2])
 
 with col1:
     @st.cache_data
@@ -162,16 +162,79 @@ with col2:
         st.markdown("## 🧠 Ask our Health Chatbot")
         st.write("Feel free to ask any health-related or heart disease-related questions.")
 
-        # Apply CSS to make the chatbot section larger
+        # Apply CSS to style the chatbot section
         st.markdown("""
         <style>
+        /* Style the chatbot container */
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) {
             min-height: 800px !important;
             max-height: 800px !important;
             overflow-y: auto;
             padding: 20px;
-            background-color: #1E1E1E;
+            background-color: #2A2A2A;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Style user messages (right-aligned, blue background) */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p {
+            max-width: 70%;
+            padding: 10px 15px;
+            margin: 5px 0;
             border-radius: 10px;
+            line-height: 1.5;
+        }
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p strong {
+            color: #FFFFFF;
+        }
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p:not(:has(> span)) {
+            background-color: #1E90FF;
+            margin-left: auto;
+            color: #FFFFFF;
+        }
+
+        /* Style bot messages (left-aligned, gray background) */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p:has(> span) {
+            background-color: #444444;
+            margin-right: auto;
+            color: #E0E0E0;
+        }
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p > span {
+            color: #E0E0E0;
+        }
+
+        /* Style the input area */
+        div[data-testid="stTextInput"] {
+            background-color: #333333;
+            border-radius: 20px;
+            padding: 5px;
+        }
+        div[data-testid="stTextInput"] input {
+            background-color: transparent !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+
+        /* Style the Send button */
+        div[data-testid="stButton"] button {
+            background-color: #1E90FF;
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 8px 20px;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        div[data-testid="stButton"] button:hover {
+            background-color: #4682B4;
+        }
+
+        /* Style the Go to Prediction button */
+        div[data-testid="stButton"]:last-of-type button {
+            background-color: #FF6347;
+            margin-top: 10px;
+        }
+        div[data-testid="stButton"]:last-of-type button:hover {
+            background-color: #FF4500;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -187,15 +250,19 @@ with col2:
             else:
                 st.markdown(f"> 💬 **{sender}:** {message}")
 
+        # Place input field and Send button side by side
         for input_key in st.session_state.input_fields:
-            user_input = st.text_input("You:", key=input_key, label_visibility="collapsed")
-            if st.button("Send", key=f"send_{input_key}"):
-                if user_input:
-                    st.session_state.chat_history.append(("You", user_input))
-                    bot_response = chatbot.get_response(user_input)
-                    st.session_state.chat_history.append(("Bot", bot_response))
-                    st.session_state.input_fields.append(f"chat_input_{len(st.session_state.input_fields) + 1}")
-                    st.experimental_rerun()
+            input_col, button_col = st.columns([4, 1])  # 4:1 ratio for input field and button
+            with input_col:
+                user_input = st.text_input("You:", key=input_key, label_visibility="collapsed", placeholder="Type your message...")
+            with button_col:
+                if st.button("Send", key=f"send_{input_key}"):
+                    if user_input:
+                        st.session_state.chat_history.append(("You", user_input))
+                        bot_response = chatbot.get_response(user_input)
+                        st.session_state.chat_history.append(("Bot", bot_response))
+                        st.session_state.input_fields.append(f"chat_input_{len(st.session_state.input_fields) + 1}")
+                        st.experimental_rerun()
 
         if st.button('Go to Prediction'):
             st.session_state.active_view = 'prediction'
