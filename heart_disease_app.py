@@ -125,7 +125,7 @@ with col1:
 
             feature_importance = pd.DataFrame({
                 'Feature': feature_columns,
-                'Importance': model.feature_importances_,
+                'Importance)는 model.feature_importances_,
                 'Your Value': user_input.iloc[0].values
             })
 
@@ -162,7 +162,7 @@ with col2:
         st.markdown("## 🧠 Ask our Health Chatbot")
         st.write("Feel free to ask any health-related or heart disease-related questions.")
 
-        # Apply CSS to style the chatbot section
+        # Apply CSS to style the chatbot section like Grok AI
         st.markdown("""
         <style>
         /* Style the chatbot container */
@@ -172,41 +172,30 @@ with col2:
             overflow-y: auto;
             padding: 20px;
             background-color: #2A2A2A;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
         }
 
-        /* Style user messages (right-aligned, blue background) */
+        /* Style all messages (left-aligned, blue background) */
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p {
-            max-width: 70%;
+            max-width: 80%;
             padding: 10px 15px;
             margin: 5px 0;
             border-radius: 10px;
             line-height: 1.5;
-        }
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p strong {
-            color: #FFFFFF;
-        }
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p:not(:has(> span)) {
             background-color: #1E90FF;
-            margin-left: auto;
             color: #FFFFFF;
+            margin-right: auto;
         }
 
-        /* Style bot messages (left-aligned, gray background) */
+        /* Remove extra spacing for bot messages */
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p:has(> span) {
-            background-color: #444444;
-            margin-right: auto;
-            color: #E0E0E0;
-        }
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) div.stMarkdown p > span {
-            color: #E0E0E0;
+            background-color: #1E90FF;
         }
 
         /* Style the input area */
         div[data-testid="stTextInput"] {
-            background-color: #333333;
-            border-radius: 20px;
+            background-color: #444444;
+            border-radius: 10px;
             padding: 5px;
         }
         div[data-testid="stTextInput"] input {
@@ -219,7 +208,7 @@ with col2:
         div[data-testid="stButton"] button {
             background-color: #1E90FF;
             color: #FFFFFF;
-            border-radius: 20px;
+            border-radius: 10px;
             padding: 8px 20px;
             border: none;
             transition: background-color 0.3s ease;
@@ -244,15 +233,50 @@ with col2:
         if "input_fields" not in st.session_state:
             st.session_state.input_fields = [f"chat_input_{i}" for i in range(1)]
 
+        # Function to format bot response as a numbered list if it contains multiple points
+        def format_bot_response(response):
+            # Split response into lines
+            lines = response.split('\n')
+            formatted_response = []
+            current_item = []
+            in_list = False
+            list_counter = 1
+
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                # Check if the line starts with a number followed by a dot (e.g., "1.")
+                if line.startswith(f"{list_counter}."):
+                    if current_item:
+                        formatted_response.append(" ".join(current_item))
+                        current_item = []
+                    in_list = True
+                    current_item.append(line)
+                    list_counter += 1
+                elif in_list:
+                    current_item.append(line)
+                else:
+                    formatted_response.append(line)
+
+            if current_item:
+                formatted_response.append(" ".join(current_item))
+
+            return formatted_response
+
+        # Display chat history
         for i, (sender, message) in enumerate(st.session_state.chat_history):
             if sender == "You":
                 st.markdown(f"**{sender}:** {message}")
             else:
-                st.markdown(f"> 💬 **{sender}:** {message}")
+                # Format bot response as a list if applicable
+                formatted_messages = format_bot_response(message)
+                for msg in formatted_messages:
+                    st.markdown(f"> 💬 **{sender}:** {msg}")
 
         # Place input field and Send button side by side
         for input_key in st.session_state.input_fields:
-            input_col, button_col = st.columns([4, 1])  # 4:1 ratio for input field and button
+            input_col, button_col = st.columns([4, 1])
             with input_col:
                 user_input = st.text_input("You:", key=input_key, label_visibility="collapsed", placeholder="Type your message...")
             with button_col:
