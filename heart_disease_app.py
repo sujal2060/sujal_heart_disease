@@ -20,10 +20,6 @@ st.set_page_config(
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 chatbot = HeartDiseaseChatbot(TOGETHER_API_KEY)
 
-# Initialize session state variables before any access
-if "show_chatbot" not in st.session_state:
-    st.session_state.show_chatbot = True
-
 # Title and description
 st.title("Heart Disease Prediction System")
 st.write("""
@@ -31,16 +27,8 @@ This application predicts the probability of heart disease based on various heal
 Please fill in your details below to get a prediction.
 """)
 
-# Dynamically set columns based on chatbot visibility
-if st.session_state.show_chatbot:
-    col1, col2, col3 = st.columns([1, 2, 1])
-else:
-    col1, col2, col3 = st.columns([1, 4, 1])
-
-if "chatgpt_input" not in st.session_state:
-    st.session_state["chatgpt_input"] = ""
-if "clear_input" not in st.session_state:
-    st.session_state["clear_input"] = False
+# Create three columns with custom widths
+col1, col2, col3 = st.columns([1, 2, 1])
 
 with col1:
     # Load and preprocess data
@@ -216,7 +204,6 @@ with col1:
         
         # Make prediction
         if st.sidebar.button('Predict'):
-            st.session_state.show_chatbot = False
             # Ensure columns are in the same order as training data
             user_input = user_input[feature_columns]
             
@@ -286,119 +273,64 @@ with col1:
     # Run prediction
     main_prediction()
 
-# Define the send_message callback for chat input
-def send_message():
-    user_input = st.session_state["chatgpt_input"]
-    if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        response = chatbot.get_response(user_input)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.session_state["chatgpt_input"] = ""  # Safe to clear here
-
 with col2:
-    # Show 'Open Chatbot' button at the top right if chatbot is hidden
-    open_bot_col, _ = st.columns([1, 8])
-    if not st.session_state.show_chatbot:
-        with open_bot_col:
-            if st.button("🤖 Open Chatbot", key="open_chatbot_btn", help="Open Chatbot"):
-                st.session_state.show_chatbot = True
+    # Chatbot interface with custom styling
+    st.markdown("""
+    <style>
+    .chat-container {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #f0f2f6;
+        margin: 20px 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .chat-header {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #1f77b4;
+        text-align: center;
+        padding: 10px;
+        border-bottom: 2px solid #1f77b4;
+    }
+    .chat-subheader {
+        font-size: 16px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    st.markdown('<div class="chat-header">SUJAL HEART DISEASE PREDICTION SYSTEM</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chat-subheader">Your AI Assistant for Heart Health Information</div>', unsafe_allow_html=True)
+    
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    # Only render the chatbot container if visible
-    if st.session_state.show_chatbot:
-        st.markdown("""
-        <style>
-        .chatgpt-container {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-            padding: 0;
-            margin: 0 auto;
-            max-width: 600px;
-            min-height: 500px;
-            display: flex;
-            flex-direction: column;
-            height: 70vh;
-        }
-        .chatgpt-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 16px 16px 16px;
-        }
-        .chatgpt-bubble {
-            padding: 12px 18px;
-            border-radius: 18px;
-            margin-bottom: 12px;
-            max-width: 80%;
-            word-break: break-word;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-        .chatgpt-user {
-            background: #e6f0ff;
-            color: #222;
-            align-self: flex-end;
-        }
-        .chatgpt-assistant {
-            background: #f4f4f8;
-            color: #222;
-            align-self: flex-start;
-        }
-        .chatgpt-input-bar {
-            display: flex;
-            border-top: 1px solid #eee;
-            padding: 12px 16px;
-            background: #fafbfc;
-        }
-        .chatgpt-input-bar input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            background: transparent;
-        }
-        .chatgpt-input-bar button {
-            background: #1f77b4;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 18px;
-            margin-left: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-        st.markdown('<div class="chatgpt-container">', unsafe_allow_html=True)
-        st.markdown('<div class="chatgpt-messages">', unsafe_allow_html=True)
-
-        # Display chat history with bubbles
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
-
-        for message in st.session_state.messages:
-            role_class = "chatgpt-user" if message["role"] == "user" else "chatgpt-assistant"
-            st.markdown(
-                f'<div class="chatgpt-bubble {role_class}">{message["content"]}</div>',
-                unsafe_allow_html=True
-            )
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Chat input bar
-        input_key = "chatgpt_input"
-        col_input, col_send = st.columns([8, 1])
-        with col_input:
-            st.text_input(
-                "Ask me anything about heart disease...",
-                key=input_key,
-                label_visibility="collapsed",
-                placeholder="Type your message here..."
-            )
-        with col_send:
-            st.button("Send", key="send_btn", on_click=send_message)
-
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Chat input
+    if prompt := st.chat_input("Ask me anything about heart disease..."):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Get chatbot response
+        with st.chat_message("assistant"):
+            response = chatbot.get_response(prompt)
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
     # Additional information or features can be added here
