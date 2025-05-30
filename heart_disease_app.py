@@ -27,8 +27,11 @@ This application predicts the probability of heart disease based on various heal
 Please fill in your details below to get a prediction.
 """)
 
-# Create three columns with custom widths
-col1, col2, col3 = st.columns([1, 2, 1])
+# Dynamically set columns based on chatbot visibility
+if st.session_state.show_chatbot:
+    col1, col2, col3 = st.columns([1, 2, 1])
+else:
+    col1, col2, col3 = st.columns([1, 4, 1])
 
 if "show_chatbot" not in st.session_state:
     st.session_state.show_chatbot = True
