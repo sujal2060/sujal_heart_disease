@@ -32,6 +32,10 @@ col1, col2, col3 = st.columns([1, 2, 1])
 
 if "show_chatbot" not in st.session_state:
     st.session_state.show_chatbot = True
+if "chatgpt_input" not in st.session_state:
+    st.session_state["chatgpt_input"] = ""
+if "clear_input" not in st.session_state:
+    st.session_state["clear_input"] = False
 
 with col1:
     # Load and preprocess data
@@ -368,14 +372,25 @@ with col2:
         input_key = "chatgpt_input"
         col_input, col_send = st.columns([8, 1])
         with col_input:
-            user_input = st.text_input("Ask me anything about heart disease...", key=input_key, label_visibility="collapsed", placeholder="Type your message here...")
+            user_input = st.text_input(
+                "Ask me anything about heart disease...",
+                key=input_key,
+                label_visibility="collapsed",
+                placeholder="Type your message here..."
+            )
         with col_send:
             send = st.button("Send", key="send_btn")
-        if user_input and send:
+
+        if send and user_input:
             st.session_state.messages.append({"role": "user", "content": user_input})
             response = chatbot.get_response(user_input)
             st.session_state.messages.append({"role": "assistant", "content": response})
-            st.session_state[input_key] = ""
+            st.session_state["clear_input"] = True  # Set flag to clear input
+
+        # Clear the input after sending (on next rerun)
+        if st.session_state.get("clear_input", False):
+            st.session_state["chatgpt_input"] = ""
+            st.session_state["clear_input"] = False
 
         st.markdown('</div>', unsafe_allow_html=True)
 
