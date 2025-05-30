@@ -31,8 +31,8 @@ This application predicts the probability of heart disease based on various heal
 Please fill in your details below to get a prediction.
 """)
 
-# Create layout columns
-col1, col2 = st.columns([2, 1])
+# Adjust column proportions to give more space to chatbot
+col1, col2 = st.columns([1, 2])  # Changed proportions to make col2 (chatbot) larger
 
 with col1:
     @st.cache_data
@@ -70,8 +70,7 @@ with col1:
         age = st.sidebar.slider('Age', 20, 100, 50)
         sex = st.sidebar.selectbox('Sex', ['Male', 'Female'])
         cp = st.sidebar.selectbox('Chest Pain Type', ['ATA', 'NAP', 'ASY', 'TA'])
-        trestbps = st.sidebar.slider('Resting Blood Pressure (mm Hg)', 90, 200, 120)
-        chol = st.sidebar.slider('Cholesterol (mg/dl)', 100, 600, 250)
+        trestbps = st.sidebar.slider('Resting Blood Pressure (mm Hg)', 90, 200,stick    chol = st.sidebar.slider('Cholesterol (mg/dl)', 100, 600, 250)
         fbs = st.sidebar.selectbox('Fasting Blood Sugar > 120 mg/dl', ['No', 'Yes'])
         restecg = st.sidebar.selectbox('Resting ECG Results', ['Normal', 'ST', 'LVH'])
         thalach = st.sidebar.slider('Maximum Heart Rate Achieved', 60, 202, 150)
@@ -162,13 +161,24 @@ with col2:
         st.markdown("## 🧠 Ask our Health Chatbot")
         st.write("Feel free to ask any health-related or heart disease-related questions.")
 
+        # Apply CSS to make the chatbot section larger
+        st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stTextInput"]) {
+            min-height: 800px !important;
+            max-height: 800px !important;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 10px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
         if "input_fields" not in st.session_state:
             st.session_state.input_fields = [f"chat_input_{i}" for i in range(1)]
-
-        # Make chatbot section larger
-        st.markdown("<style> .css-1aumxhk { height: 600px; overflow-y: auto; }</style>", unsafe_allow_html=True)
 
         for i, (sender, message) in enumerate(st.session_state.chat_history):
             if sender == "You":
