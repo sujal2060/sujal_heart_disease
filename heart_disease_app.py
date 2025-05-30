@@ -125,7 +125,7 @@ with col1:
 
             feature_importance = pd.DataFrame({
                 'Feature': feature_columns,
-                'Importance)는 model.feature_importances_,
+                'Importance': model.feature_importances_,
                 'Your Value': user_input.iloc[0].values
             })
 
@@ -235,7 +235,6 @@ with col2:
 
         # Function to format bot response as a numbered list if it contains multiple points
         def format_bot_response(response):
-            # Split response into lines
             lines = response.split('\n')
             formatted_response = []
             current_item = []
@@ -246,7 +245,6 @@ with col2:
                 line = line.strip()
                 if not line:
                     continue
-                # Check if the line starts with a number followed by a dot (e.g., "1.")
                 if line.startswith(f"{list_counter}."):
                     if current_item:
                         formatted_response.append(" ".join(current_item))
@@ -269,7 +267,6 @@ with col2:
             if sender == "You":
                 st.markdown(f"**{sender}:** {message}")
             else:
-                # Format bot response as a list if applicable
                 formatted_messages = format_bot_response(message)
                 for msg in formatted_messages:
                     st.markdown(f"> 💬 **{sender}:** {msg}")
