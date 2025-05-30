@@ -296,11 +296,14 @@ def send_message():
         st.session_state["chatgpt_input"] = ""  # Safe to clear here
 
 with col2:
-    # Bot icon/button to show chatbot if hidden
+    # Show 'Open Chatbot' button at the top right if chatbot is hidden
+    open_bot_col, _ = st.columns([1, 8])
     if not st.session_state.show_chatbot:
-        if st.button("🤖 Open Chatbot"):
-            st.session_state.show_chatbot = True
+        with open_bot_col:
+            if st.button("🤖 Open Chatbot", key="open_chatbot_btn", help="Open Chatbot"):
+                st.session_state.show_chatbot = True
 
+    # Only render the chatbot container if visible
     if st.session_state.show_chatbot:
         st.markdown("""
         <style>
