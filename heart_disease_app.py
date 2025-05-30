@@ -164,20 +164,27 @@ with col2:
 
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
+        if "input_fields" not in st.session_state:
+            st.session_state.input_fields = [f"chat_input_{i}" for i in range(1)]
 
-        user_input = st.text_input("You:", key="chat_input")
+        # Make chatbot section larger
+        st.markdown("<style> .css-1aumxhk { height: 600px; overflow-y: auto; }</style>", unsafe_allow_html=True)
 
-        if st.button("Send"):
-            if user_input:
-                st.session_state.chat_history.append(("You", user_input))
-                bot_response = chatbot.get_response(user_input)
-                st.session_state.chat_history.append(("Bot", bot_response))
-
-        for sender, message in st.session_state.chat_history:
+        for i, (sender, message) in enumerate(st.session_state.chat_history):
             if sender == "You":
                 st.markdown(f"**{sender}:** {message}")
             else:
                 st.markdown(f"> 💬 **{sender}:** {message}")
+
+        for input_key in st.session_state.input_fields:
+            user_input = st.text_input("You:", key=input_key, label_visibility="collapsed")
+            if st.button("Send", key=f"send_{input_key}"):
+                if user_input:
+                    st.session_state.chat_history.append(("You", user_input))
+                    bot_response = chatbot.get_response(user_input)
+                    st.session_state.chat_history.append(("Bot", bot_response))
+                    st.session_state.input_fields.append(f"chat_input_{len(st.session_state.input_fields) + 1}")
+                    st.experimental_rerun()
 
         if st.button('Go to Prediction'):
             st.session_state.active_view = 'prediction'
