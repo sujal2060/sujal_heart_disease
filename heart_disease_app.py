@@ -27,40 +27,42 @@ This application predicts the probability of heart disease based on various heal
 Please fill in your details below to get a prediction.
 """)
 
-# Create three columns
+# Create layout columns
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col1:
     # Load and preprocess data
     @st.cache_data
     def load_data():
-        data = pd.read_csv('heart.csv')
-        return data
+        return pd.read_csv('heart.csv')
 
     # Train model
     @st.cache_resource
     def train_model():
         data = load_data()
+
+        # Encode categorical variables
         data['Sex'] = data['Sex'].map({'M': 1, 'F': 0})
         data['ChestPainType'] = data['ChestPainType'].map({'ATA': 0, 'NAP': 1, 'ASY': 2, 'TA': 3})
         data['RestingECG'] = data['RestingECG'].map({'Normal': 0, 'ST': 1, 'LVH': 2})
         data['ExerciseAngina'] = data['ExerciseAngina'].map({'N': 0, 'Y': 1})
         data['ST_Slope'] = data['ST_Slope'].map({'Up': 0, 'Flat': 1, 'Down': 2})
-        
-        feature_columns = ['Age', 'Sex', 'ChestPainType', 'RestingBP', 'Cholesterol', 
-                           'FastingBS', 'RestingECG', 'MaxHR', 'ExerciseAngina', 
+
+        feature_columns = ['Age', 'Sex', 'ChestPainType', 'RestingBP', 'Cholesterol',
+                           'FastingBS', 'RestingECG', 'MaxHR', 'ExerciseAngina',
                            'Oldpeak', 'ST_Slope']
-        
+
         X = data[feature_columns]
         y = data['HeartDisease']
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
+
+        X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
-        
+
         model = RandomForestClassifier(n_estimators=100, random_state=42)
         model.fit(X_train_scaled, y_train)
-        
+
         return model, scaler, feature_columns
 
     def get_user_input():
@@ -77,6 +79,7 @@ with col1:
         oldpeak = st.sidebar.slider('ST Depression Induced by Exercise', 0.0, 6.2, 1.0)
         slope = st.sidebar.selectbox('Slope of Peak Exercise ST Segment', ['Up', 'Flat', 'Down'])
 
+        # Encode user inputs
         sex = 1 if sex == 'Male' else 0
         cp = ['ATA', 'NAP', 'ASY', 'TA'].index(cp)
         fbs = 1 if fbs == 'Yes' else 0
@@ -98,54 +101,46 @@ with col1:
             'ST_Slope': slope
         }
 
-        return pd.DataFrame([user_data], columns=['Age', 'Sex', 'ChestPainType', 'RestingBP', 'Cholesterol', 
-                                                  'FastingBS', 'RestingECG', 'MaxHR', 'ExerciseAngina', 
-                                                  'Oldpeak', 'ST_Slope'])
+        return pd.DataFrame([user_data])
 
     def main_prediction():
         model, scaler, feature_columns = train_model()
         user_input = get_user_input()
 
         if st.sidebar.button('Predict'):
-            user_input = user_input[feature_columns]
-            user_input_scaled = scaler.transform(user_input)
+            user_input_scaled = scaler.transform(user_input[feature_columns])
             prediction = model.predict(user_input_scaled)
             probability = model.predict_proba(user_input_scaled)
 
             st.subheader('Prediction Results')
             if prediction[0] == 1:
-                st.error('High Risk of Heart Disease')
+                st.error('⚠️ High Risk of Heart Disease')
             else:
-                st.success('Low Risk of Heart Disease')
+                st.success('✅ Low Risk of Heart Disease')
 
-            st.write(f'Probability of Heart Disease: {probability[0][1]:.2%}')
+            st.write(f"**Probability of Heart Disease:** `{probability[0][1]:.2%}`")
 
-            st.subheader('Feature Importance and Your Values')
+            # Feature importance chart
             feature_importance = pd.DataFrame({
                 'Feature': feature_columns,
                 'Importance': model.feature_importances_,
                 'Your Value': user_input.iloc[0].values
             })
-            feature_importance['Your Value'] = feature_importance.apply(lambda row: 
-                f"{row['Your Value']:.1f}" if isinstance(row['Your Value'], (int, float)) 
-                else str(row['Your Value']), axis=1)
+
+            # Format values for display
+            feature_importance['Your Value'] = feature_importance['Your Value'].apply(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x))
 
             graph_col, table_col = st.columns([2, 1])
-
             with graph_col:
-                fig = px.bar(feature_importance, 
-                           x='Feature', 
-                           y='Importance',
-                           title='Feature Importance in Prediction',
-                           labels={'Importance': 'Importance Score', 'Feature': 'Health Parameters'},
-                           color='Importance',
-                           color_continuous_scale='RdBu')
-                fig.update_layout(
-                    xaxis_title="Health Parameters",
-                    yaxis_title="Importance Score",
-                    showlegend=False,
-                    height=500
+                fig = px.bar(
+                    feature_importance,
+                    x='Feature',
+                    y='Importance',
+                    color='Importance',
+                    title='Feature Importance in Prediction',
+                    color_continuous_scale='Viridis'
                 )
+                fig.update_layout(height=500)
                 st.plotly_chart(fig, use_container_width=True)
 
             with table_col:
@@ -178,4 +173,3 @@ with col2:
             st.markdown(f"**{sender}:** {message}")
         else:
             st.markdown(f"> 💬 **{sender}:** {message}")
-
