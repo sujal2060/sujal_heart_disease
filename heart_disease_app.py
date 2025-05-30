@@ -30,6 +30,9 @@ Please fill in your details below to get a prediction.
 # Create three columns with custom widths
 col1, col2, col3 = st.columns([1, 2, 1])
 
+if "show_chatbot" not in st.session_state:
+    st.session_state.show_chatbot = True
+
 with col1:
     # Load and preprocess data
     @st.cache_data
@@ -204,6 +207,7 @@ with col1:
         
         # Make prediction
         if st.sidebar.button('Predict'):
+            st.session_state.show_chatbot = False
             # Ensure columns are in the same order as training data
             user_input = user_input[feature_columns]
             
@@ -274,63 +278,69 @@ with col1:
     main_prediction()
 
 with col2:
-    # Chatbot interface with custom styling
-    st.markdown("""
-    <style>
-    .chat-container {
-        padding: 20px;
-        border-radius: 10px;
-        background-color: #f0f2f6;
-        margin: 20px 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .chat-header {
-        font-size: 28px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        color: #1f77b4;
-        text-align: center;
-        padding: 10px;
-        border-bottom: 2px solid #1f77b4;
-    }
-    .chat-subheader {
-        font-size: 16px;
-        color: #666;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    st.markdown('<div class="chat-header">SUJAL HEART DISEASE PREDICTION SYSTEM</div>', unsafe_allow_html=True)
-    st.markdown('<div class="chat-subheader">Your AI Assistant for Heart Health Information</div>', unsafe_allow_html=True)
-    
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Bot icon/button to show chatbot if hidden
+    if not st.session_state.show_chatbot:
+        if st.button("🤖 Open Chatbot"):
+            st.session_state.show_chatbot = True
 
-    # Display chat history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    if st.session_state.show_chatbot:
+        # Chatbot interface with custom styling
+        st.markdown("""
+        <style>
+        .chat-container {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f0f2f6;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chat-header {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1f77b4;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 2px solid #1f77b4;
+        }
+        .chat-subheader {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        st.markdown('<div class="chat-header">SUJAL HEART DISEASE PREDICTION SYSTEM</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chat-subheader">Your AI Assistant for Heart Health Information</div>', unsafe_allow_html=True)
+        
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-    # Chat input
-    if prompt := st.chat_input("Ask me anything about heart disease..."):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display chat history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Chat input
+        if prompt := st.chat_input("Ask me anything about heart disease..."):
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            # Get chatbot response
+            with st.chat_message("assistant"):
+                response = chatbot.get_response(prompt)
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
         
-        # Display user message
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        # Get chatbot response
-        with st.chat_message("assistant"):
-            response = chatbot.get_response(prompt)
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
     # Additional information or features can be added here
