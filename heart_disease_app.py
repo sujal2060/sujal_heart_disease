@@ -20,6 +20,10 @@ st.set_page_config(
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 chatbot = HeartDiseaseChatbot(TOGETHER_API_KEY)
 
+# Initialize session state for view management
+if 'active_view' not in st.session_state:
+    st.session_state.active_view = 'chatbot'  # Default view
+
 # Title and description
 st.title("❤️ Heart Disease Prediction System")
 st.write("""
@@ -28,20 +32,16 @@ Please fill in your details below to get a prediction.
 """)
 
 # Create layout columns
-col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2 = st.columns([2, 1])
 
 with col1:
-    # Load and preprocess data
     @st.cache_data
     def load_data():
         return pd.read_csv('heart.csv')
 
-    # Train model
     @st.cache_resource
     def train_model():
         data = load_data()
-
-        # Encode categorical variables
         data['Sex'] = data['Sex'].map({'M': 1, 'F': 0})
         data['ChestPainType'] = data['ChestPainType'].map({'ATA': 0, 'NAP': 1, 'ASY': 2, 'TA': 3})
         data['RestingECG'] = data['RestingECG'].map({'Normal': 0, 'ST': 1, 'LVH': 2})
@@ -79,7 +79,6 @@ with col1:
         oldpeak = st.sidebar.slider('ST Depression Induced by Exercise', 0.0, 6.2, 1.0)
         slope = st.sidebar.selectbox('Slope of Peak Exercise ST Segment', ['Up', 'Flat', 'Down'])
 
-        # Encode user inputs
         sex = 1 if sex == 'Male' else 0
         cp = ['ATA', 'NAP', 'ASY', 'TA'].index(cp)
         fbs = 1 if fbs == 'Yes' else 0
@@ -103,11 +102,15 @@ with col1:
 
         return pd.DataFrame([user_data])
 
-    def main_prediction():
+    def show_prediction():
         model, scaler, feature_columns = train_model()
         user_input = get_user_input()
 
         if st.sidebar.button('Predict'):
+            st.session_state.active_view = 'prediction'
+            st.experimental_rerun()
+
+        if st.session_state.active_view == 'prediction':
             user_input_scaled = scaler.transform(user_input[feature_columns])
             prediction = model.predict(user_input_scaled)
             probability = model.predict_proba(user_input_scaled)
@@ -120,14 +123,12 @@ with col1:
 
             st.write(f"**Probability of Heart Disease:** `{probability[0][1]:.2%}`")
 
-            # Feature importance chart
             feature_importance = pd.DataFrame({
                 'Feature': feature_columns,
                 'Importance': model.feature_importances_,
                 'Your Value': user_input.iloc[0].values
             })
 
-            # Format values for display
             feature_importance['Your Value'] = feature_importance['Your Value'].apply(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x))
 
             graph_col, table_col = st.columns([2, 1])
@@ -150,26 +151,34 @@ with col1:
                     height=500
                 )
 
-    main_prediction()
+            if st.button('Back to Chatbot'):
+                st.session_state.active_view = 'chatbot'
+                st.experimental_rerun()
+
+    show_prediction()
 
 with col2:
-    st.markdown("## 🧠 Ask our Health Chatbot")
-    st.write("Feel free to ask any health-related or heart disease-related questions.")
+    if st.session_state.active_view == 'chatbot':
+        st.markdown("## 🧠 Ask our Health Chatbot")
+        st.write("Feel free to ask any health-related or heart disease-related questions.")
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
 
-    user_input = st.text_input("You:", key="chat_input")
+        user_input = st.text_input("You:", key="chat_input")
 
-    if st.button("Send"):
-        if user_input:
-            st.session_state.chat_history.append(("You", user_input))
-            bot_response = chatbot.get_response(user_input)
-            st.session_state.chat_history.append(("Bot", bot_response))
+        if st.button("Send"):
+            if user_input:
+                st.session_state.chat_history.append(("You", user_input))
+                bot_response = chatbot.get_response(user_input)
+                st.session_state.chat_history.append(("Bot", bot_response))
 
-    # Display chat history
-    for sender, message in st.session_state.chat_history:
-        if sender == "You":
-            st.markdown(f"**{sender}:** {message}")
-        else:
-            st.markdown(f"> 💬 **{sender}:** {message}")
+        for sender, message in st.session_state.chat_history:
+            if sender == "You":
+                st.markdown(f"**{sender}:** {message}")
+            else:
+                st.markdown(f"> 💬 **{sender}:** {message}")
+
+        if st.button('Go to Prediction'):
+            st.session_state.active_view = 'prediction'
+            st.experimental_rerun()
